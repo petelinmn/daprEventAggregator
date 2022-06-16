@@ -1,0 +1,8 @@
+publish PulseEvent { "Name":"Pulse", "Value": 120 }
+publish PulseEvent { "Name":"Pulse", "Value": 130 }
+delay 1000
+publish PressureEvent { "Name":"Pressure", "Value": "95 - 120" }
+publish PressureEvent { "Name":"Pressure", "Value": "110 - 130" }
+delay 500
+publish PulseEvent { "Name":"Pulse", "Value": 110 }
+

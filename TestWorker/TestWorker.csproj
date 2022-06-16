@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net6.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Dapr.Actors" Version="1.7.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Services\ConfigurationService\Configuration.Actors.Contract\Configuration.Actors.Contract.csproj" />
+      <ProjectReference Include="..\Services\WorkerManagerService\WorkerManager.Actors.Contract\WorkerManager.Actors.Contract.csproj" />
+    </ItemGroup>
+
+</Project>

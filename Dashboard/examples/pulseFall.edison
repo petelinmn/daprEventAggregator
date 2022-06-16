@@ -1,0 +1,5 @@
+publish PulseEvent { "Name":"Pulse", "Value": 140 }
+publish PulseEvent { "Name":"Pulse", "Value": 135 }
+publish PulseEvent { "Name":"Pulse", "Value": 120 }
+publish PulseEvent { "Name":"Pulse", "Value": 110 }
+publish PulseEvent { "Name":"Pulse", "Value": 92 }

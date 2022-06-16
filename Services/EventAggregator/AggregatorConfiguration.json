@@ -1,0 +1,77 @@
+{
+  "PubSubs": [
+    {
+      "Name": "pubsub",
+      "ComplexEvents": [
+        {
+          "Name": "PulseRiseEvent",
+          "EventQueue": [
+            "PulseEvent"
+          ],
+          "EventsCount": 2,
+          "Common": null,
+          "Condition": "parseInt(e[0].Value) < parseInt(e[1].Value)",
+          "Mandatory": "All",
+          "Duration": "00:00:10"
+        },
+        {
+          "Name": "PulseFallEvent",
+          "EventQueue": [
+            "PulseEvent"
+          ],
+          "EventsCount": 5,
+          "Common": null,
+          "Condition": "parseInt(e[0].Value) > parseInt(e[1].Value) && parseInt(e[1].Value) > parseInt(e[2].Value) && parseInt(e[2].Value) > parseInt(e[3].Value)",
+          "Mandatory": "All",
+          "Duration": "00:00:10"
+        },
+        {
+          "Name": "PressureRiseEvent",
+          "EventQueue": [
+            "PressureEvent"
+          ],
+          "EventsCount": 2,
+          "Common": null,
+          "Condition": "(parseInt(e[0].Value.split('-')[0]) < parseInt(e[1].Value.split('-')[0]))",
+          "Mandatory": "All",
+          "Duration": "00:00:10"
+        },
+        {
+          "Name": "PressureFallEvent",
+          "EventQueue": [
+            "PressureEvent"
+          ],
+          "EventsCount": 2,
+          "Common": null,
+          "Condition": "(parseInt(e[0].Value.split('-')[0]) > parseInt(e[1].Value.split('-')[0]))",
+          "Mandatory": "All",
+          "Duration": "00:00:10"
+        },
+        {
+          "Name": "PulseAndPressureRiseEvent",
+          "EventQueue": [
+            "PressureRiseEvent",
+            "PulseRiseEvent"
+          ],
+          "EventsCount": null,
+          "Common": null,
+          "Condition": "true",
+          "Mandatory": "All",
+          "Duration": "00:00:15"
+        },
+        {
+          "Name": "PulseAndPressureFallEvent",
+          "EventQueue": [
+            "PressureFallEvent",
+            "PulseFallEvent"
+          ],
+          "EventsCount": null,
+          "Common": null,
+          "Condition": "true",
+          "Mandatory": "All",
+          "Duration": "00:00:15"
+        }
+      ]
+    }
+  ]
+}

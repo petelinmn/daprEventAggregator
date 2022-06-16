@@ -1,0 +1,29 @@
+{
+  "PubSubs": [
+    {
+      "Name": "pubsub",
+      "Stereotypes": [
+        {
+          "Name": "Hypotonia",
+          "Events": [
+            "PulseAndPressureFallEvent"
+          ],
+          "Actions": [
+            "Walking",
+            "Coffee"
+          ]
+        },
+        {
+          "Name": "Hypertonia",
+          "Events": [
+            "PulseAndPressureRiseEvent"
+          ],
+          "Actions": [
+            "TakePills",
+            "Sleep"
+          ]
+        }
+      ]
+    }
+  ]
+}
