@@ -7,7 +7,7 @@ namespace WorkerManager.Actors.Contract
 {
     public interface IWorkerManagerActor : IActor
     {
-        Task<Guid> Register(string[] args, Guid? contextId, string sourceName);
+        Task<Guid> Register(string Name, string[] args, Guid? contextId, Guid[] parents);
         Task<WorkerArgs> StartNext(string[] implementations);
         Task<WorkerStatus> GetStatus(Guid id);
         Task Stop(Guid id);

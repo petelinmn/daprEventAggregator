@@ -4,6 +4,7 @@ using DaprEventAggregatorPlugin;
 namespace StereotypeRecognizer.Controllers
 {
     using System;
+    using System.Drawing;
     using System.Linq;
     using System.Threading.Tasks;
     using Common;
@@ -31,47 +32,59 @@ namespace StereotypeRecognizer.Controllers
             this.logger = logger;
         }
 
+        async Task<List<Stereotype>> GetStereotypes()
+        {
+            const string eventsKey = "StereotypesEventsList";
+            var daprClient = new DaprClientBuilder().Build();
+
+            return (await daprClient.GetStateAsync<List<Stereotype>>(StoreName, eventsKey))
+                ?? new List<Stereotype>();
+        }
+
         /// <summary>
         /// State store name.
         /// </summary>
         public const string StoreName = "statestore";
         private readonly ILogger<StereotypeRecognizeController> logger;
-        async Task<List<Event>> UsingEvents(EventRequest request, Func<List<Event>, Task<List<Event>>> func)
+        async Task<List<Stereotype>> UsingEvents(EventRequest request, Func<Stereotype, Task<List<Stereotype>>> func)
         {
             const string eventsKey = "StereotypesEventsList";
             var daprClient = new DaprClientBuilder().Build();
 
-            var eventList = (await daprClient.GetStateAsync<List<Event>>(StoreName, eventsKey)) ?? new List<Event>();
+            var eventList = (await GetStereotypes());
             if (request != null)
             {
-                Console.WriteLine($"Event received:\t {request.Name}\t {request.Arg}");
-                var newEvent = new Event
+                Console.WriteLine($"Stereotype received:\t {request.Name}\t {request.Arg}");
+                var newEventTemplate = new Stereotype
                 {
                     Name = request.Name,
                     Arg = request.Arg,
                     ContextId = request.ContextId,
                     Id = request.Id,
                     DateTime = request.DateTime,
-                    Parents = request.Parents
+                    Parents = request.Parents,
                 };
 
-                eventList.Add(newEvent);
+                var newItems = await func(newEventTemplate);
+
+                if (newItems?.Count > 0)
+                    eventList.AddRange(newItems);
 
                 Console.WriteLine($"Events count:\t {eventList.Count}");
                 await daprClient.SaveStateAsync(StoreName, eventsKey, eventList);
             }
 
-            return await func(eventList);
+            return eventList;
         }
  
         [Aggregator]
-        [HttpPost("event")]
-        public async Task Event(EventRequest request) =>
-            await UsingEvents(request, async (_) =>
+        [HttpPost("stereotype")]
+        public async Task Stereotype(EventRequest request) =>
+            await UsingEvents(request, async (stereotypesTemplate) =>
             {
+                var result = new List<Stereotype>();
                 try
                 {
-                    Console.WriteLine(request.Name);
                     var workerManagerActor = ActorProxy.Create<IWorkerManagerActor>(
                     new ActorId($"WorkerManagerActor_{request.Name}"), "WorkerManagerActor");
 
@@ -79,14 +92,24 @@ namespace StereotypeRecognizer.Controllers
                     var stereotypesToCheck = stereotypeConfiguration
                         .PubSubs.SelectMany(i => i.Stereotypes
                         .Where(s => s.Events?.Any(e => e == request.Name) == true));
-                    Console.WriteLine(JsonConvert.SerializeObject(stereotypesToCheck));
+
                     foreach (var stereotype in stereotypesToCheck)
                     {
-                        Console.WriteLine(string.Join(", ", stereotype.Actions));
-                        foreach (var action in stereotype.Actions)
+                        var stereotypeToSave = (Stereotype)stereotypesTemplate.Clone();
+                        stereotypeToSave.Name = stereotype.Name;
+                        if (StereotypeCheck(request.Arg, stereotypeToSave, stereotype))
                         {
-                            await workerManagerActor.Register(new[] { action }, request.ContextId, request.Name);
+                            stereotypeToSave.IsConfirmed = true;
+                            foreach (var action in stereotype.Actions)
+                            {
+                                await workerManagerActor.Register(action,
+                                    new string[] { }, request.ContextId, new Guid[] { stereotypeToSave.Id });
+                            }
                         }
+
+                        Console.WriteLine($"Stereotype confirmed: {stereotypeToSave.IsConfirmed}");
+
+                        result.Add(stereotypeToSave);
                     }
                 }
                 catch (Exception ex)
@@ -94,13 +117,126 @@ namespace StereotypeRecognizer.Controllers
                     Console.WriteLine(ex.Message);
                 }
 
-                return _;
+                return result;
+            });
+
+        private static bool StereotypeCheck(string arg, Stereotype stereotypeToSave, StereotypeRecognizer.Stereotype stereotype)
+        {
+            var obj = ArgDict.GetData(arg, new Type[]
+            {
+                new Dictionary<string, string>().GetType(),
+                new List<Dictionary<string, string>>().GetType(),
+                new List<List<Dictionary<string, string>>>().GetType(),
             });
 
 
-        [HttpGet("event/{contextId}")]
-        public async Task<List<Event>> GetEvents(Guid contextId) =>
-            await UsingEvents(null, async (events) =>
-                await Task.Run(() => events.Where(e => e.ContextId == contextId).ToList()));
+            var argDict = obj as ArgDict;
+            var listOfArgDict = obj as List<Dictionary<string, string>>;
+            var listOfListOfArgDict = obj as List<List<Dictionary<string, string>>>;
+
+            if (listOfListOfArgDict != null || listOfArgDict != null)
+            {
+                var charts = listOfListOfArgDict != null
+                    ? ArgDict.FlattenToDictPoints(listOfListOfArgDict)
+                    : ArgDict.FlattenToDictPoints(listOfArgDict);
+                var charts2 = listOfListOfArgDict != null
+                    ? ArgDict.FlattenToDictPoints2(listOfListOfArgDict)
+                    : ArgDict.FlattenToDictPoints2(listOfArgDict);
+
+                Func<Dictionary<string, string>, Dictionary<string, List<PointF>>> getBounds2 = boundFuncs =>
+                    boundFuncs == null
+                        ? null
+                        : charts2.ToDictionary(chart => chart.Key,
+                            chart => !boundFuncs.ContainsKey(chart.Key)
+                                ? null
+                                : chart.Value.Where(prop => prop.Key == "Value")
+                                    .FirstOrDefault().Value
+                                        .Select((_,x) =>
+                                            new PointF(x, NCalcExpression.Calculate(boundFuncs[chart.Key], x,
+                                                chart.Value.Where(v => v.Key != "Name").ToDictionary(v => v.Key, v => v.Value.Skip(x).FirstOrDefault())))).ToList());
+
+                stereotypeToSave.UpperBounds = getBounds2(stereotype.UpperBounds);
+                stereotypeToSave.LowerBounds = getBounds2(stereotype.LowerBounds);
+
+                var result = false;
+                foreach (var chart in charts)
+                {
+                    List<PointF> upperBound = stereotypeToSave.UpperBounds?.ContainsKey(chart.Key) == true
+                        ? stereotypeToSave.UpperBounds[chart.Key] : null;
+                    List<PointF> lowerBound = stereotypeToSave.LowerBounds?.ContainsKey(chart.Key) == true
+                        ? stereotypeToSave.LowerBounds[chart.Key] : null;
+
+                    if ((upperBound is null || upperBound.Count() == 0)
+                        && (lowerBound is null || lowerBound.Count() == 0))
+                    {
+                        result = true;
+                        continue;
+                    }
+
+                    for (var x = 0; x < chart.Value.Count; x++)
+                    {
+                        var y = chart.Value[x].Y;
+
+                        float? upperY = (upperBound is null || upperBound.Count() < x - 1)
+                            ? null : upperBound[x].Y;
+
+                        float? lowerY = (lowerBound is null || lowerBound.Count() < x - 1)
+                            ? null : lowerBound[x].Y;
+
+                        if (upperY.HasValue && lowerY.HasValue)
+                        {
+                            if (upperY > lowerY)
+                            {
+                                if (y < upperY && y > lowerY)
+                                {
+                                    Console.WriteLine($"y:{y}, uppperY:{upperY}, lowerY: {lowerY}");
+                                    if (!stereotypeToSave.ConfirmedProperties.Contains(chart.Key))
+                                        stereotypeToSave.ConfirmedProperties.Add(chart.Key);
+                                    result = true;
+                                }
+                            }
+                            else
+                            {
+                                if (y < upperY || y > lowerY)
+                                {
+                                    Console.WriteLine($"y:{y}, uppperY:{upperY}, lowerY: {lowerY}");
+                                    if (!stereotypeToSave.ConfirmedProperties.Contains(chart.Key))
+                                        stereotypeToSave.ConfirmedProperties.Add(chart.Key);
+                                    result = true;
+                                }
+                            }
+                        }
+                        else if (upperY.HasValue)
+                        {
+                            if (y < upperY)
+                            {
+                                Console.WriteLine($"y:{y}, uppperY:{upperY}");
+                                if (!stereotypeToSave.ConfirmedProperties.Contains(chart.Key))
+                                    stereotypeToSave.ConfirmedProperties.Add(chart.Key);
+                                result = true;
+                            }
+                        }
+                        else if (lowerY.HasValue)
+                        {
+                            if (y > lowerY)
+                            {
+                                Console.WriteLine($"y:{y}, lowerY:{lowerY}");
+                                if (!stereotypeToSave.ConfirmedProperties.Contains(chart.Key))
+                                    stereotypeToSave.ConfirmedProperties.Add(chart.Key);
+                                result = true;
+                            }
+                        }
+                    }
+                }
+
+                return result;
+            }
+
+            return false;
+        }
+
+        [HttpGet("stereotype/{contextId}")]
+        public async Task<List<Stereotype>> GetEvents(Guid contextId) =>
+           (await GetStereotypes()).Where(e => e.ContextId == contextId).ToList();
     }
 }

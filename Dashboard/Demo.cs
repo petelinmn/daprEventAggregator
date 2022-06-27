@@ -15,16 +15,16 @@ namespace Dashboard
         public Demo()
         {
             InitializeComponent();
-            //        OpenNewTab("New",
-            //            "publish PulseEvent { \"Name\":\"Pulse\", \"Value\": 120 }\n" +
-            //            "publish PulseEvent { \"Name\":\"Pulse\", \"Value\": 130 }\n" +
-            //            "delay 1000\n" +
-            //            "publish PressureEvent { \"Name\":\"Pressure\", \"Value\": \"95 - 120\" }\n" +
-            //            "publish PressureEvent { \"Name\":\"Pressure\", \"Value\": \"110 - 130\" }\n" +
-            //            "delay 500\n" +
-            //"delay 2\npublish PulseEvent { \"Name\":\"Pulse\", \"Value\": 110 }\n");
+            OpenNewTab("New",
+                "publish PulseEvent { \"Name\":\"Pulse\", \"Value\": 120 }\n" +
+                "publish PulseEvent { \"Name\":\"Pulse\", \"Value\": 130 }\n" +
+                "delay 1000\n" +
+                "publish PressureEvent { \"Name\":\"Pressure\", \"Value\": 95 }\n" +
+                "publish PressureEvent { \"Name\":\"Pressure\", \"Value\": 110 }\n" +
+                "delay 500\n" +
+    "delay 2\npublish PulseEvent { \"Name\":\"Pulse\", \"Value\": 110 }\n");
 
-            OpenNewTab("New", "");
+            //OpenNewTab("New", "");
         }
 
         private void runButton_Click(object sender, EventArgs e)

@@ -9,6 +9,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="CoreCLR-NCalc" Version="2.2.109" />
     <PackageReference Include="Dapr.AspNetCore" Version="1.7.0" />
     <PackageReference Include="Jint" Version="2.11.58" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
@@ -17,7 +18,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Common\Common.csproj" />
     <ProjectReference Include="..\..\DaprEventAggregatorPlugin\DaprEventAggregatorPlugin.csproj" />
-    <ProjectReference Include="..\ConfigurationService\Configuration.Actors.Contract\Configuration.Actors.Contract.csproj" />
     <ProjectReference Include="..\WorkerManagerService\WorkerManager.Actors.Contract\WorkerManager.Actors.Contract.csproj" />
   </ItemGroup>
 

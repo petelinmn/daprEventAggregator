@@ -24,6 +24,8 @@ public class Stereotype
     public string ArgumentName { get; set; }
     public string Condition { get; set; }
     public List<string> Events { get; set; }
+    public Dictionary<string, string> UpperBounds { get; set; }
+    public Dictionary<string, string> LowerBounds { get; set; }
     public List<string> Actions { get; set; }
     public bool Check(string argument)
     {

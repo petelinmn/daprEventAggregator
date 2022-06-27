@@ -8,9 +8,9 @@
           "EventQueue": [
             "PulseEvent"
           ],
-          "EventsCount": 2,
+          "EventsCount": 3,
           "Common": null,
-          "Condition": "parseInt(e[0].Value) < parseInt(e[1].Value)",
+          "Condition": "e[0].Value < e[1].Value",
           "Mandatory": "All",
           "Duration": "00:00:10"
         },
@@ -21,7 +21,7 @@
           ],
           "EventsCount": 5,
           "Common": null,
-          "Condition": "parseInt(e[0].Value) > parseInt(e[1].Value) && parseInt(e[1].Value) > parseInt(e[2].Value) && parseInt(e[2].Value) > parseInt(e[3].Value)",
+          "Condition": "e[0].Value > e[1].Value && e[1].Value > e[2].Value && e[2].Value > e[3].Value",
           "Mandatory": "All",
           "Duration": "00:00:10"
         },
@@ -30,9 +30,9 @@
           "EventQueue": [
             "PressureEvent"
           ],
-          "EventsCount": 2,
+          "EventsCount": 5,
           "Common": null,
-          "Condition": "(parseInt(e[0].Value.split('-')[0]) < parseInt(e[1].Value.split('-')[0]))",
+          "Condition": "e[0].Value < e[1].Value",
           "Mandatory": "All",
           "Duration": "00:00:10"
         },
@@ -41,11 +41,11 @@
           "EventQueue": [
             "PressureEvent"
           ],
-          "EventsCount": 2,
+          "EventsCount": 15,
           "Common": null,
-          "Condition": "(parseInt(e[0].Value.split('-')[0]) > parseInt(e[1].Value.split('-')[0]))",
+          "Condition": "e[0].Value > e[1].Value",
           "Mandatory": "All",
-          "Duration": "00:00:10"
+          "Duration": "00:00:15"
         },
         {
           "Name": "PulseAndPressureRiseEvent",

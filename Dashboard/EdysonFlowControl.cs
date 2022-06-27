@@ -17,6 +17,14 @@ namespace Dashboard
 {
     public partial class EdysonFlowControl : UserControl
     {
+        private enum ObjType
+        {
+            AtomicEvent,
+            ComplexEvent,
+            Stereotype,
+            Worker
+        }
+
         public EdysonFlowControl()
         {
             InitializeComponent();
@@ -33,34 +41,53 @@ namespace Dashboard
             return new Point(rect.X + (int)(rect.Width/2), rect.Y + (int)(rect.Height / 2));
         }
 
-        public void SelectObject(Guid selectedObjectGuid)
+        private void SelectObject(Guid selectedObjectGuid)
         {
             if (selectedObjectGuid != SelectedObject)
             {
                 SelectedObject = selectedObjectGuid;
+
                 Draw();
             }
         }
 
         List<Event> Events { get; set; } = new List<Event>();
+        List<Stereotype> Stereotypes { get; set; } = new List<Stereotype>();
         List<WorkerInfo> WorkerInfos { get; set; }
 
         Dictionary<Guid, Rectangle> PaintedEvents = new Dictionary<Guid, Rectangle>();
+        Dictionary<Guid, Rectangle> PaintedStereotypes = new Dictionary<Guid, Rectangle>();
         Dictionary<Guid, Rectangle> PaintedWorkers = new Dictionary<Guid, Rectangle>();
 
-        public void SetData(List<Event> events, List<WorkerInfo> workersInfo)
+
+        public Event? SelectedEvent { get => Events?.FirstOrDefault(i => i.Id == SelectedObject); }
+        public Stereotype? SelectedStereotype { get => Stereotypes?.FirstOrDefault(i => i.Id == SelectedObject); }
+        public WorkerInfo? SelectedWorker { get => WorkerInfos?.FirstOrDefault(i => i.Id == SelectedObject); }
+
+        public void SetData(List<Event> events, List<Stereotype> stereotypes, List<WorkerInfo> workersInfo)
         {
             Events = events;
             WorkerInfos = workersInfo;
+            Stereotypes = stereotypes;
             Draw();
         }
 
         private void Draw()
         {
-            var list = new ArrayList();
+            var list = new List<BaseEntity>();
             list.AddRange(Events);
+            list.AddRange(Stereotypes);
             list.AddRange(WorkerInfos);
-            list.Sort(new EventAndWorkerInfoComparer());
+
+            list.Sort((x, y) =>
+            {
+                if (x.DateTime > y.DateTime)
+                    return 1;
+                if (x.DateTime < y.DateTime)
+                    return -1;
+
+                return 0;
+            });
 
             var graphics = CreateGraphics();
             graphics.CompositingQuality = CompositingQuality.HighQuality;
@@ -68,47 +95,53 @@ namespace Dashboard
 
             DrawCounter(graphics);
 
-            var previousEvents = new List<Event>();
-            var previousWorkers = new List<WorkerInfo>();
             var currentColumnX = 80;
             var currentRowY = 20;
             PaintedEvents = new Dictionary<Guid, Rectangle>();
+            PaintedStereotypes = new Dictionary<Guid, Rectangle>();
             PaintedWorkers = new Dictionary<Guid, Rectangle>();
             var workerEventRelations = new Dictionary<Guid, Guid>();
             var currentColumnWidth = 0;
+            var lastObjType = ObjType.AtomicEvent;
             foreach (var obj in list)
             {
-                var isEvent = obj is Event;
-                Event? @event = isEvent ? obj as Event : null;
-                WorkerInfo? workerInfo = !isEvent ? obj as WorkerInfo : null;
+                var @event = obj as Event;
+                var stereotype = obj as Stereotype;
+                var workerInfo = obj as WorkerInfo;
 
-                if (@event != null)
+                var isStereotype = obj is Stereotype;
+                var isEvent = !isStereotype && obj is Event;
+                var isWorker = !isStereotype && !isEvent && obj is WorkerInfo;
+
+                if (isEvent)
                 {
                     //Is event complex?
                     var isEventComplex = @event.Parents.Length > 0;
                     if (isEventComplex)
                     {
-                        var parentRects = PaintedEvents.Where(i => @event.Parents.Contains(i.Key))
-                            .Select(i => i.Value).TakeLast(2).ToList();
+                        //var parentRects = PaintedEvents.Where(i => @event.Parents.Contains(i.Key))
+                        //    .Select(i => i.Value).TakeLast(2).ToList();
 
-                        var maxWidth = -1;
-                        var sumY = 0;
-                        foreach (var parentRect in parentRects)
+                        currentColumnX += currentColumnWidth + 10;
+                        currentRowY = 20;
+                        lastObjType = ObjType.ComplexEvent;
+                    }
+                    else
+                    {
+                        if (currentRowY < 150)
+                            currentRowY = 150;
+
+                        if (lastObjType != ObjType.AtomicEvent)
                         {
-                            if (parentRect.Width > maxWidth)
-                                maxWidth = parentRect.Width;
-
-                            sumY += parentRect.Y;
+                            currentRowY = 150;
+                            currentColumnX += currentColumnWidth + 15;
                         }
-
-                        var avgHeight = sumY / parentRects.Count;
-                        currentColumnX += currentColumnWidth + 5;
-                        currentColumnWidth = 0;
-
-                        if (avgHeight * 1.5 > this.Height)
-                            currentRowY = 30;
-                        else
-                            currentRowY = avgHeight + 5;
+                        else if (currentRowY > this.Height - 50)
+                        {
+                            currentRowY = 150;
+                            currentColumnX += currentColumnWidth + 15;
+                        }
+                        lastObjType = ObjType.AtomicEvent;
                     }
 
                     int width = @event.Name.Length * 12 - (@event.Name.Length > 10 ? @event.Name.Length : -1);
@@ -119,23 +152,50 @@ namespace Dashboard
                     if (rect.Width > currentColumnWidth)
                         currentColumnWidth = rect.Width + 20;
                 }
-                else if (workerInfo != null)
+                if (isStereotype)
                 {
-                    var parent = Events.FirstOrDefault(e => e.Name == workerInfo.SourceName);
-                    var paintedEvent = PaintedEvents.FirstOrDefault(i => i.Key == parent?.Id);
-                    currentColumnX = paintedEvent.Value.X + paintedEvent.Value.Width + 10;
+                    currentColumnX += currentColumnWidth + 10;
 
+                    int width = stereotype.Name.Length * 16 - (stereotype.Name.Length > 10 ? stereotype.Name.Length : -1);
+                    int height = width / 2;
+                    currentRowY = this.Height / 2 - height;
+
+                    var rect = new Rectangle(currentColumnX + 50, currentRowY + 50, width, height);
+                    PaintedStereotypes.Add(stereotype.Id, rect);
+
+                    currentColumnWidth = rect.Width + 20;
+
+                    lastObjType = ObjType.Stereotype;
+                }
+                else if (isWorker)
+                {
+                    var parent = Stereotypes.FirstOrDefault(e => e.Id == workerInfo?.Parents.FirstOrDefault());
+                    var paintedStereotype = PaintedStereotypes.FirstOrDefault(i => i.Key == parent?.Id);
+
+                    var brothersCount = parent != null ? list.Where(i => i.Parents.Contains(parent.Id)).ToList().Count() : 3;
+                    
                     if (currentRowY + 30 > this.Height)
                         currentRowY = 0;
 
-                    currentRowY += 25;
+                    if (lastObjType == ObjType.Worker)
+                    {
+                        currentRowY += this.Height / brothersCount;
+                    }
+                    else
+                    {
+                        currentRowY = 50;
+                        currentColumnX += paintedStereotype.Value.Width + 100;
+                    }
 
+                    lastObjType = ObjType.Worker;
                     string title = GetDisplayTitleForWorker(workerInfo);
-                    int width = title.Length * 12 - (title.Length > 10 ? title.Length : -1);
-                    var rect = new Rectangle(currentColumnX, currentRowY, width, 32);
+                    int width = title.Length * 16 - (title.Length > 10 ? title.Length : -1);
+                    var rect = new Rectangle(currentColumnX, currentRowY, width, width);
 
                     PaintedWorkers.Add(workerInfo.Id, rect);
-                    workerEventRelations.Add(workerInfo.Id, parent.Id);
+
+                    if (parent != null)
+                        workerEventRelations.Add(workerInfo.Id, parent.Id);
                 }
 
                 currentRowY += 50;
@@ -160,10 +220,28 @@ namespace Dashboard
                         graphics.DrawLine(new Pen(Color.DarkGreen, 2), point1, point2);
                     }
                 }
+            }
+
+            foreach (var paintedStereotype in PaintedStereotypes)
+            {
+                var stereotype = Stereotypes.FirstOrDefault(i => i.Id == paintedStereotype.Key);
+                if (stereotype?.Parents?.Any() != true)
+                    continue;
+
+                foreach (var parentId in stereotype.Parents)
+                {
+                    if (PaintedEvents.ContainsKey(parentId))
+                    {
+                        var paintedParent = PaintedEvents[parentId];
+                        var point1 = GetCenterOfRectangle(paintedParent);
+                        var point2 = GetCenterOfRectangle(paintedStereotype.Value);
+                        graphics.DrawLine(new Pen(Color.DarkGreen, 2), point1, point2);
+                    }
+                }
 
                 foreach (var relation in workerEventRelations)
                 {
-                    var parentRect = PaintedEvents.FirstOrDefault(i => i.Key == relation.Value).Value;
+                    var parentRect = PaintedStereotypes.FirstOrDefault(i => i.Key == relation.Value).Value;
                     var workerRect = PaintedWorkers[relation.Key];
                     var point1 = GetCenterOfRectangle(parentRect);
                     var point2 = GetCenterOfRectangle(workerRect);
@@ -177,20 +255,25 @@ namespace Dashboard
                 DrawEvent(graphics, Events.FirstOrDefault(i => i.Id == paintedEvent.Key), paintedEvent.Value);
             }
 
+            foreach (var paintedStereotype in PaintedStereotypes)
+            {
+                DrawStereotype(graphics, Stereotypes.FirstOrDefault(i => i.Id == paintedStereotype.Key), paintedStereotype.Value);
+            }
+
             //Draw workers
             foreach (var paintedWorker in PaintedWorkers)
             {
-                DrawWorker(graphics, WorkerInfos.FirstOrDefault(i => i.Id == paintedWorker.Key), paintedWorker.Value);
+                DrawWorker(graphics, WorkerInfos?.FirstOrDefault(i => i.Id == paintedWorker.Key), paintedWorker.Value);
             }
         }
 
         private static string GetDisplayTitleForWorker(WorkerInfo? workerInfo)
         {
-            var title = workerInfo?.Args[0];
+            var title = workerInfo?.Name;
             if (workerInfo?.Data?.Result != null)
             {
                 if (int.TryParse(workerInfo.Data.Result, out var progress))
-                    title = $"{workerInfo?.Args[0]}  {progress * 10}%";
+                    title = $"{workerInfo?.Name}  {progress * 10}%";
             }
 
             return title;
@@ -198,10 +281,27 @@ namespace Dashboard
 
         private void DrawEvent(Graphics graphics, Event? @event, Rectangle rect)
         {
-            var brush = @event.Id == SelectedObject ? Brushes.Red : Brushes.Bisque;
+            if (@event == null)
+                return;
+
+            var brush = @event.Parents.Length > 0 ? Brushes.Yellow : Brushes.Bisque;
+            var pen = @event.Id == SelectedObject ? new Pen(Brushes.Black, 4) : new Pen(Brushes.Gray);
             graphics.FillPath(brush, RoundedRect(rect, 10));
-            graphics.DrawPath(Pens.Black, RoundedRect(rect, 10));
+            graphics.DrawPath(pen, RoundedRect(rect, 10));
             graphics.DrawString(@event.Name, new Font("courier", 12), Brushes.Black, new PointF(rect.X + 5, rect.Y + 5));
+        }
+
+        private void DrawStereotype(Graphics graphics, Stereotype? stereotype, Rectangle rect)
+        {
+            if (stereotype == null)
+                return;
+
+            var brush = stereotype.IsConfirmed ? Brushes.LightGreen : Brushes.LightPink;
+            var pen = stereotype.Id == SelectedObject ? new Pen(Brushes.Black, 4) : new Pen(Brushes.Gray);
+            graphics.FillPath(brush, RoundedRect(rect, 10));
+            graphics.DrawPath(pen, RoundedRect(rect, 10));
+            graphics.DrawString(stereotype.Name, new Font("courier", 14), Brushes.Black, new PointF(rect.X + 16, rect.Y + 20));
+            graphics.DrawString(stereotype.StereotypeName, new Font("courier", 14), Brushes.Black, new PointF(rect.X + 16, rect.Y + 32));
         }
 
         private void DrawWorker(Graphics graphics, WorkerInfo workerInfo, Rectangle rect)
@@ -211,13 +311,15 @@ namespace Dashboard
                 : workerInfo.Status == WorkerStatus.Work ? Brushes.Yellow
                 : Brushes.YellowGreen;
 
-            if (workerInfo.Id == SelectedObject)
-                brush = Brushes.Red;
-            graphics.FillPath(brush, RoundedRect(rect, 10));
-            graphics.DrawPath(Pens.Black, RoundedRect(rect, 10));
+            var pen = workerInfo.Id == SelectedObject ? new Pen(Brushes.Black, 4) : new Pen(Brushes.Gray);
+            //graphics.FillPath(brush, RoundedRect(rect, 10));
+            //graphics.DrawPath(pen, RoundedRect(rect, 10));
+
+            graphics.FillEllipse(brush, rect);
+            graphics.DrawEllipse(pen, rect);
 
             string title = GetDisplayTitleForWorker(workerInfo);
-            graphics.DrawString(title, new Font("courier", 12), Brushes.Black, new PointF(rect.X + 5, rect.Y + 5));
+            graphics.DrawString(title, new Font("courier", 12), Brushes.Black, new PointF(rect.X + rect.Width / 2 - title.Length * 5, rect.Y + (int)(rect.Height / 2.4)));
         }
 
         GraphicsPath RoundedRect(Rectangle bounds, int radius)
@@ -267,28 +369,33 @@ namespace Dashboard
         private void EdysonFlowControl_Click(object sender, EventArgs e)
         {
             foreach (var item in PaintedEvents)
-            {
-                if (IsPointInsideRect(item.Value, new Point(MousePositionRelativeToThis.X, MousePositionRelativeToThis.Y)))
-                {
-                    OnSelectObject?.Invoke(this, new OnSelectObjectEventArgs()
-                    {
-                        SelectedGuid = item.Key
-                    });
+                if (CheckIfShouldSelectObject(item))
                     return;
-                }
-            }
+
+            foreach (var item in PaintedStereotypes)
+                if (CheckIfShouldSelectObject(item))
+                    return;
 
             foreach (var item in PaintedWorkers)
-            {
-                if (IsPointInsideRect(item.Value, new Point(MousePositionRelativeToThis.X, MousePositionRelativeToThis.Y)))
-                {
-                    OnSelectObject?.Invoke(this, new OnSelectObjectEventArgs()
-                    {
-                        SelectedGuid = item.Key
-                    });
+                if (CheckIfShouldSelectObject(item))
                     return;
-                }
+
+            Draw();
+        }
+
+        private bool CheckIfShouldSelectObject(KeyValuePair<Guid, Rectangle> item)
+        {
+            if (IsPointInsideRect(item.Value, new Point(MousePositionRelativeToThis.X, MousePositionRelativeToThis.Y)))
+            {
+                SelectObject(item.Key);
+                OnSelectObject?.Invoke(this, new OnSelectObjectEventArgs()
+                {
+                    SelectedGuid = item.Key
+                });
+                return true;
             }
+
+            return false;
         }
 
         private bool IsPointInsideRect(Rectangle rect, Point point)
@@ -311,21 +418,6 @@ namespace Dashboard
         private void EdysonFlowControl_MouseMove(object sender, MouseEventArgs e)
         {
             MousePositionRelativeToThis = new Point(e.X, e.Y);
-        }
-    }
-
-    class EventAndWorkerInfoComparer : IComparer
-    {
-        int IComparer.Compare(object a, object b)
-        {
-            var dt1 = a is Event ? ((Event)a).DateTime : ((WorkerInfo)a).StartTime;
-            var dt2 = b is Event ? ((Event)b).DateTime : ((WorkerInfo)b).StartTime;
-            if (dt1 > dt2)
-                return 1;
-            if (dt1 < dt2)
-                return -1;
-            else
-                return 0;
         }
     }
 }

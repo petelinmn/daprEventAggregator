@@ -17,7 +17,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Common\Common.csproj" />
     <ProjectReference Include="..\..\DaprEventAggregatorPlugin\DaprEventAggregatorPlugin.csproj" />
-    <ProjectReference Include="..\ConfigurationService\Configuration.Actors.Contract\Configuration.Actors.Contract.csproj" />
     <ProjectReference Include="..\WorkerManagerService\WorkerManager.Actors.Contract\WorkerManager.Actors.Contract.csproj" />
   </ItemGroup>
 

@@ -1,6 +1,5 @@
 ﻿
 using System.Globalization;
-using Configuration.Actors.Contract;
 using Dapr.Actors;
 using Dapr.Actors.Client;
 using WorkerManager.Actors.Contract;

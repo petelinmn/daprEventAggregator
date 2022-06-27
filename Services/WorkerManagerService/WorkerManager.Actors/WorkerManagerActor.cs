@@ -11,16 +11,17 @@ namespace WorkerManager.Actors
     
     public class WorkerManagerActor : Actor, IWorkerManagerActor
     {
-        public async Task<Guid> Register(string[] args, Guid? contextId, string sourceName)
+        public async Task<Guid> Register(string Name, string[] args, Guid? contextId, Guid[] parents)
         {
             var worker = new WorkerInfo
             {
                 Id = Guid.NewGuid(),
                 Status = WorkerStatus.Init,
                 Args = args ?? new string[] { },
-                ContextId = contextId,
-                StartTime = DateTime.Now,
-                SourceName = sourceName,
+                ContextId = contextId.Value,
+                DateTime = DateTime.Now,
+                Parents = parents,
+                Name = Name
             };
 
             await SaveWorker(worker);
@@ -41,7 +42,7 @@ namespace WorkerManager.Actors
             if (worker == null)
                 return null;
 
-            if (implementations.Contains(worker.Args[0]))
+            if (implementations.Contains(worker.Name))
             {
                 worker.Status = WorkerStatus.Work;
 

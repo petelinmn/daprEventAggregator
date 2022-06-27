@@ -42,7 +42,6 @@
             this.argumentsTextBox = new System.Windows.Forms.TextBox();
             this.chartTab = new System.Windows.Forms.TabPage();
             this.simpleChart1 = new Dashboard.SimpleChart();
-            this.listBox2 = new System.Windows.Forms.ListBox();
             this.panel1.SuspendLayout();
             this.panel2.SuspendLayout();
             this.tabControl1.SuspendLayout();
@@ -52,7 +51,7 @@
             // 
             // commandEditor
             // 
-            this.commandEditor.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.commandEditor.Font = new System.Drawing.Font("Cascadia Mono", 10.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.commandEditor.Location = new System.Drawing.Point(0, 0);
             this.commandEditor.Name = "commandEditor";
             this.commandEditor.Size = new System.Drawing.Size(360, 726);
@@ -63,12 +62,12 @@
             // listBox1
             // 
             this.listBox1.Enabled = false;
-            this.listBox1.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.listBox1.Font = new System.Drawing.Font("Cascadia Mono", 10.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.listBox1.FormattingEnabled = true;
-            this.listBox1.ItemHeight = 28;
+            this.listBox1.ItemHeight = 24;
             this.listBox1.Location = new System.Drawing.Point(704, 0);
             this.listBox1.Name = "listBox1";
-            this.listBox1.Size = new System.Drawing.Size(439, 704);
+            this.listBox1.Size = new System.Drawing.Size(439, 676);
             this.listBox1.TabIndex = 2;
             this.listBox1.Visible = false;
             // 
@@ -95,6 +94,7 @@
             // 
             // edysonFlowControl1
             // 
+            this.edysonFlowControl1.BackColor = System.Drawing.Color.SkyBlue;
             this.edysonFlowControl1.Counter = 0;
             this.edysonFlowControl1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.edysonFlowControl1.Location = new System.Drawing.Point(0, 0);
@@ -106,7 +106,6 @@
             // panel2
             // 
             this.panel2.Controls.Add(this.tabControl1);
-            this.panel2.Controls.Add(this.listBox2);
             this.panel2.Dock = System.Windows.Forms.DockStyle.Right;
             this.panel2.Location = new System.Drawing.Point(439, 0);
             this.panel2.Name = "panel2";
@@ -118,10 +117,10 @@
             this.tabControl1.Controls.Add(this.argTab);
             this.tabControl1.Controls.Add(this.chartTab);
             this.tabControl1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tabControl1.Location = new System.Drawing.Point(465, 0);
+            this.tabControl1.Location = new System.Drawing.Point(0, 0);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(566, 307);
+            this.tabControl1.Size = new System.Drawing.Size(1031, 307);
             this.tabControl1.TabIndex = 4;
             this.tabControl1.SelectedIndexChanged += new System.EventHandler(this.tabControl1_SelectedIndexChanged);
             // 
@@ -131,22 +130,22 @@
             this.argTab.Location = new System.Drawing.Point(4, 29);
             this.argTab.Name = "argTab";
             this.argTab.Padding = new System.Windows.Forms.Padding(3);
-            this.argTab.Size = new System.Drawing.Size(558, 274);
+            this.argTab.Size = new System.Drawing.Size(1023, 274);
             this.argTab.TabIndex = 0;
             this.argTab.Text = "Arguments";
             this.argTab.UseVisualStyleBackColor = true;
             // 
             // argumentsTextBox
             // 
-            this.argumentsTextBox.BackColor = System.Drawing.Color.MidnightBlue;
+            this.argumentsTextBox.BackColor = System.Drawing.Color.White;
             this.argumentsTextBox.Dock = System.Windows.Forms.DockStyle.Fill;
             this.argumentsTextBox.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
-            this.argumentsTextBox.ForeColor = System.Drawing.SystemColors.ScrollBar;
+            this.argumentsTextBox.ForeColor = System.Drawing.Color.MidnightBlue;
             this.argumentsTextBox.Location = new System.Drawing.Point(3, 3);
             this.argumentsTextBox.Multiline = true;
             this.argumentsTextBox.Name = "argumentsTextBox";
             this.argumentsTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.argumentsTextBox.Size = new System.Drawing.Size(552, 268);
+            this.argumentsTextBox.Size = new System.Drawing.Size(1017, 268);
             this.argumentsTextBox.TabIndex = 0;
             // 
             // chartTab
@@ -155,7 +154,7 @@
             this.chartTab.Location = new System.Drawing.Point(4, 29);
             this.chartTab.Name = "chartTab";
             this.chartTab.Padding = new System.Windows.Forms.Padding(3);
-            this.chartTab.Size = new System.Drawing.Size(558, 274);
+            this.chartTab.Size = new System.Drawing.Size(1023, 274);
             this.chartTab.TabIndex = 1;
             this.chartTab.Text = "Chart";
             this.chartTab.UseVisualStyleBackColor = true;
@@ -165,24 +164,10 @@
             this.simpleChart1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.simpleChart1.Location = new System.Drawing.Point(3, 3);
             this.simpleChart1.Name = "simpleChart1";
-            this.simpleChart1.Size = new System.Drawing.Size(552, 268);
+            this.simpleChart1.Size = new System.Drawing.Size(1017, 268);
             this.simpleChart1.TabIndex = 0;
             this.simpleChart1.VisibleChanged += new System.EventHandler(this.simpleChart1_VisibleChanged);
             this.simpleChart1.Click += new System.EventHandler(this.simpleChart1_VisibleChanged);
-            // 
-            // listBox2
-            // 
-            this.listBox2.BackColor = System.Drawing.SystemColors.Desktop;
-            this.listBox2.Dock = System.Windows.Forms.DockStyle.Left;
-            this.listBox2.Font = new System.Drawing.Font("Consolas", 10.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
-            this.listBox2.ForeColor = System.Drawing.SystemColors.InactiveCaption;
-            this.listBox2.FormattingEnabled = true;
-            this.listBox2.ItemHeight = 22;
-            this.listBox2.Location = new System.Drawing.Point(0, 0);
-            this.listBox2.Name = "listBox2";
-            this.listBox2.Size = new System.Drawing.Size(465, 307);
-            this.listBox2.TabIndex = 3;
-            this.listBox2.SelectedIndexChanged += new System.EventHandler(this.listBox2_SelectedIndexChanged);
             // 
             // EventSequenceEditor
             // 
@@ -212,7 +197,6 @@
         private Panel panel1;
         private EdysonFlowControl edysonFlowControl1;
         private Panel panel2;
-        private ListBox listBox2;
         private TabControl tabControl1;
         private TabPage argTab;
         private TextBox argumentsTextBox;

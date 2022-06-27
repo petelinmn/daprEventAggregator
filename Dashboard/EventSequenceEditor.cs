@@ -19,12 +19,6 @@ namespace Dashboard
 {
     public partial class EventSequenceEditor : UserControl
     {
-        class ArgDict
-        {
-            public string? Name { get; set; }
-            public string? Value { get; set; }
-        }
-
         public enum EditorState
         {
             Stop,
@@ -116,7 +110,7 @@ namespace Dashboard
         {
             await CommandProcessing(command);
 
-            await Task.Delay(100);
+            //await Task.Delay(100);
         }
 
         private async void Process()
@@ -211,7 +205,7 @@ namespace Dashboard
                         ContextId = Guid,
                         Id = Guid.NewGuid()
                     });
-                    await Task.Delay(200);
+                    await Task.Delay(120);
                     break;
             }
         }
@@ -249,8 +243,10 @@ namespace Dashboard
         }
 
         List<Event>? EventList = new List<Event>();
+        List<Stereotype>? StereotypeList = new List<Stereotype>();
         List<WorkerInfo> WorkerList = new List<WorkerInfo>();
         List<Event> PreviousEvents = new List<Event>();
+        List<Stereotype>? PrevioudStereotypeList = new List<Stereotype>();
         List<WorkerInfo> PreviousWorkerInfos = new List<WorkerInfo>();
         private async void timer2_Tick(object sender, EventArgs e)
         {
@@ -259,11 +255,10 @@ namespace Dashboard
 
             EventList = JsonConvert.DeserializeObject<List<Event>>(responseContent);
 
-            response = await new HttpClient().GetAsync($"http://localhost:5001/event/{Guid}");
+            response = await new HttpClient().GetAsync($"http://localhost:5001/stereotype/{Guid}");
             responseContent = await response.Content.ReadAsStringAsync();
 
-            var eventList2 = JsonConvert.DeserializeObject<List<Event>>(responseContent);
-            EventList?.AddRange(eventList2 ?? new List<Event>());
+            StereotypeList = JsonConvert.DeserializeObject<List<Stereotype>>(responseContent);
 
             var workerManagerActor = ActorProxy.Create<IWorkerManagerActor>(
                 new ActorId($"WorkerManagerActor_Dashboard"), "WorkerManagerActor");
@@ -271,10 +266,15 @@ namespace Dashboard
             WorkerList = await workerManagerActor.GetWorkersByContext(Guid);
 
             var shouldUpdateFlowControl = false;
-            if (EventList.Count != PreviousEvents.Count || WorkerList.Count != PreviousWorkerInfos.Count)
+            if (EventList?.Count != PreviousEvents.Count
+                || StereotypeList?.Count != PrevioudStereotypeList?.Count
+                || WorkerList.Count != PreviousWorkerInfos.Count)
                 shouldUpdateFlowControl = true;
 
-            if (EventList.Any(e => !PreviousEvents.Any(e2 => e.Id == e2.Id)))
+            if (EventList?.Any(e => !PreviousEvents.Any(e2 => e.Id == e2.Id)) == true)
+                shouldUpdateFlowControl = true;
+
+            if (StereotypeList?.Any(e => !PrevioudStereotypeList?.Any(e2 => e.Id == e2.Id) == true) == true)
                 shouldUpdateFlowControl = true;
 
             if (WorkerList.Any(e => !PreviousWorkerInfos.Any(e2 => e.Id == e2.Id)
@@ -283,145 +283,104 @@ namespace Dashboard
 
             if (shouldUpdateFlowControl)
             {
-                edysonFlowControl1.SetData(EventList, WorkerList);
-
-                listBox2.Items.Clear();
-                if (EventList != null)
-                    foreach (var ev in EventList)
-                        listBox2.Items.Add(ev);
-
-                foreach (var worker in WorkerList)
-                    listBox2.Items.Add(worker);
-
-                if (listBox2.Items.Count > 0 && listBox2.Items.Count > _selectedIndex)
-                    listBox2.SelectedIndex = _selectedIndex;
+                edysonFlowControl1.SetData(EventList, StereotypeList, WorkerList);
             }
 
             PreviousEvents = EventList;
+            PrevioudStereotypeList = StereotypeList;
             PreviousWorkerInfos = WorkerList;
-        }
-
-        int _selectedIndex = 0;
-        private void listBox2_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            if (_selectedIndex == listBox2.SelectedIndex) return;
-            _selectedIndex = listBox2.SelectedIndex;
-
-            var @event = listBox2.SelectedItem as Event;
-            if (@event != null)
-                SelectEventProcessing(@event);
-
-            var worker = listBox2.SelectedItem as WorkerInfo;
-            if (worker != null)
-                SelectWorkerProcessing(worker);
         }
 
         private void SelectWorkerProcessing(WorkerInfo worker)
         {
-            edysonFlowControl1.SelectObject(worker.Id);
+
         }
 
         private void SelectEventProcessing(Event? @event)
         {
-            edysonFlowControl1.SelectObject(@event.Id);
-
             argumentsTextBox.Text =
                 JsonConvert.SerializeObject(JsonConvert.DeserializeObject(@event.Arg),
                 Formatting.Indented).Replace(@"\", "");
 
-            var obj = GetData(@event.Arg, new Type[]
+            var obj = ArgDict.GetData(@event.Arg, new Type[]
                 {
-                    new ArgDict().GetType(),
-                    new List<ArgDict>().GetType()
+                    new Dictionary<string, string>().GetType(),
+                    new List<Dictionary<string, string>>().GetType(),
+                    new List<List<Dictionary<string, string>>>().GetType(),
                 });
 
-            var argDict = obj as ArgDict;
-            var listOfArgDict = obj as List<ArgDict>;
+            var argDict = obj as Dictionary<string, string>;
+            var listOfArgDict = obj as List<Dictionary<string, string>>;
+            var listOfListOfArgDict = obj as List<List<Dictionary<string, string>>>;
 
-            Dictionary<string, List<Tuple<float, float>>> dataForChart =
-                new Dictionary<string, List<Tuple<float, float>>>();
+            while (tabControl1.TabCount > 1)
+                tabControl1.TabPages.RemoveAt(tabControl1.TabCount - 1);
 
-            if (argDict != null && argDict.Name != null)
+            if (argDict != null && argDict.ContainsKey("Name") && argDict.ContainsKey("Value") && float.TryParse(argDict["Value"], out float val))
             {
-                if (float.TryParse(argDict.Value, out float val))
-                {
-                    dataForChart[argDict.Name] = new List<Tuple<float, float>>() { new Tuple<float, float>(1, val) };
-                }
-                else
-                {
-                    var items = GetPointFromString(argDict.Value);
-                    dataForChart[argDict.Name + '1'] = new List<Tuple<float, float>>() { new Tuple<float, float>(1, items[0]) };
-                    dataForChart[argDict.Name + '2'] = new List<Tuple<float, float>>() { new Tuple<float, float>(1, items[1]) };
-                }
+                var dataForChart = new Dictionary<string, List<PointF>>();
+                dataForChart[argDict["Value"]] = new List<PointF>() { new PointF(1, val) };
+
+                tabControl1.TabPages.Add(dataForChart.FirstOrDefault().Key ?? "Chart");
+                var tabPage = tabControl1.TabPages[tabControl1.TabCount - 1];
+                var simpleChart = new SimpleChart();
+                tabPage.Controls.Add(simpleChart);
+                tabPage.Controls.Add(new TextBox());
+                simpleChart.Dock = DockStyle.Fill;
+                tabControl1.SelectedIndexChanged += (o, e) => simpleChart.Draw();
+
+                simpleChart.SetData(dataForChart);
             }
 
             if (listOfArgDict != null)
             {
-                foreach (var item in listOfArgDict)
+                var charts = ArgDict.FlattenToDictPoints2(listOfArgDict);
+                var data = charts.ToDictionary(i => i.Key, i => i.Value.Where(i => i.Key == "Value").FirstOrDefault().Value.Select((i, index) => new PointF(index, i.Value)).ToList());
+
+                tabControl1.TabPages.Add(data.FirstOrDefault().Key ?? "Chart");
+                var tabPage = tabControl1.TabPages[tabControl1.TabCount - 1];
+                var simpleChart = new SimpleChart();
+                tabPage.Controls.Add(simpleChart);
+                tabPage.Controls.Add(new TextBox());
+                simpleChart.Dock = DockStyle.Fill;
+                tabControl1.SelectedIndexChanged += (o, e) => simpleChart.Draw();
+
+                simpleChart.SetData(data);
+            }
+
+            if (listOfListOfArgDict != null)
+            {
+                var charts = ArgDict.FlattenToDictPoints2(listOfListOfArgDict);
+
+                foreach (var chart in charts)
                 {
-                    if (float.TryParse(item.Value, out float val) && item.Name != null)
-                    {
-                        if (dataForChart.ContainsKey(item.Name))
-                        {
-                            var list = dataForChart[item.Name];
-                            list.Add(new Tuple<float, float>(list.Count, val));
-                        }
-                        else
-                            dataForChart[item.Name] = new List<Tuple<float, float>>() { new Tuple<float, float>(0, val) };
-                    }
-                    else
-                    {
-                        var items = GetPointFromString(item.Value);
-                        for (var i = 0; i < items.Length; i++)
-                        {
-                            var lineName = item.Name + i;
-                            var val2 = items[i];
+                    tabControl1.TabPages.Add(chart.Key);
+                    var tabPage = tabControl1.TabPages[tabControl1.TabCount - 1];
+                    var simpleChart = new SimpleChart();
+                    tabPage.Controls.Add(simpleChart);
+                    tabPage.Controls.Add(new TextBox());
+                    simpleChart.Dock = DockStyle.Fill;
+                    tabControl1.SelectedIndexChanged += (o, e) => simpleChart.Draw();
 
-                            if (dataForChart.ContainsKey(lineName))
-                            {
-                                var list = dataForChart[lineName];
-                                list.Add(new Tuple<float, float>(list.Count + 1, val2));
-                            }
-                            else
-                                dataForChart[lineName] = new List<Tuple<float, float>>() { new Tuple<float, float>(1, val2) };
-                        }
+                    var stereotype = @event as Stereotype;
+                    List<PointF>? upperBound = null;
+                    List<PointF>? lowerBound = null;
+                    if (stereotype != null)
+                    {
+                        upperBound = stereotype.UpperBounds?.ContainsKey(chart.Key) == true
+                            ? stereotype.UpperBounds[chart.Key] : null;
+                        lowerBound = stereotype.LowerBounds?.ContainsKey(chart.Key) == true
+                            ? stereotype.LowerBounds[chart.Key] : null;
                     }
 
+                    var data0 = charts.Where(x => x.Key == chart.Key).ToDictionary(x => x.Key,
+                        x => x.Value.Where(i => i.Key == "Value").FirstOrDefault().Value.Select((i, index) => new PointF(index, i.HasValue ? i.Value : 0f)).ToList()
+                    );
+
+                    simpleChart.SetData(data0, upperBound, lowerBound,
+                        stereotype?.ConfirmedProperties?.Any(p => p == chart.Key) == true);
                 }
             }
-
-            simpleChart1.SetData(dataForChart);
-        }
-
-        int[] GetPointFromString(string str)
-        {
-            var splitted = str.Trim().Split('-');
-
-            var result = new List<int>();
-            for (var i = 0; i < splitted.Length; i++)
-            {
-                var splittedItem = splitted[i];
-                if (int.TryParse(splittedItem, out var num))
-                    result.Add(num);
-                else
-                    result.Add(0);
-            }
-
-            return result.ToArray();
-        }
-
-        object? GetData(string arg, Type[] types, int nextIndex = 0)
-        {
-            try
-            {
-                if (nextIndex >= types.Length)
-                    return null;
-
-                return JsonConvert.DeserializeObject(arg, types[nextIndex]);
-            }
-            catch { }
-
-            return GetData(arg, types, ++nextIndex);
         }
 
         private void simpleChart1_VisibleChanged(object sender, EventArgs e)
@@ -434,23 +393,29 @@ namespace Dashboard
             simpleChart1.Draw();
         }
 
-        private void edysonFlowControl1_OnSelectObject(object sender, OnSelectObjectEventArgs e)
+        private async void edysonFlowControl1_OnSelectObject(object sender, OnSelectObjectEventArgs e)
         {
-            var i = 0;
-            var str = $"selected:{e.SelectedGuid.ToString()}{Environment.NewLine}";
-            foreach (var item in listBox2.Items)
-            {
-                var entity = item as BaseEntity;
-                str += $"entity != null: {entity != null}, Id: {entity.Id}{Environment.NewLine}";
-                if (entity != null && entity.Id == e.SelectedGuid)
-                {
-                    listBox2.SelectedIndex = i;
-                    return;
-                }
+            tabControl1.Visible = false;
 
-                i++;
+            if (edysonFlowControl1?.SelectedEvent != null)
+                SelectEventProcessing(edysonFlowControl1.SelectedEvent);
+
+            if (edysonFlowControl1?.SelectedStereotype != null)
+                SelectEventProcessing(edysonFlowControl1.SelectedStereotype);
+
+            if (edysonFlowControl1?.SelectedWorker != null)
+                SelectWorkerProcessing(edysonFlowControl1.SelectedWorker);
+
+
+            if (edysonFlowControl1?.SelectedWorker == null)
+            {
+                await Task.Delay(200);
+
+                if (tabControl1.TabCount >= 2)
+                    tabControl1.SelectedIndex = 1;
+
+                tabControl1.Visible = true;
             }
-            //MessageBox.Show(str);
         }
     }
 }
