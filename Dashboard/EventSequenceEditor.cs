@@ -250,45 +250,54 @@ namespace Dashboard
         List<WorkerInfo> PreviousWorkerInfos = new List<WorkerInfo>();
         private async void timer2_Tick(object sender, EventArgs e)
         {
-            var response = await new HttpClient().GetAsync($"http://localhost:5000/event/{Guid}");
-            var responseContent = await response.Content.ReadAsStringAsync();
-
-            EventList = JsonConvert.DeserializeObject<List<Event>>(responseContent);
-
-            response = await new HttpClient().GetAsync($"http://localhost:5001/stereotype/{Guid}");
-            responseContent = await response.Content.ReadAsStringAsync();
-
-            StereotypeList = JsonConvert.DeserializeObject<List<Stereotype>>(responseContent);
-
-            var workerManagerActor = ActorProxy.Create<IWorkerManagerActor>(
-                new ActorId($"WorkerManagerActor_Dashboard"), "WorkerManagerActor");
-
-            WorkerList = await workerManagerActor.GetWorkersByContext(Guid);
-
-            var shouldUpdateFlowControl = false;
-            if (EventList?.Count != PreviousEvents.Count
-                || StereotypeList?.Count != PrevioudStereotypeList?.Count
-                || WorkerList.Count != PreviousWorkerInfos.Count)
-                shouldUpdateFlowControl = true;
-
-            if (EventList?.Any(e => !PreviousEvents.Any(e2 => e.Id == e2.Id)) == true)
-                shouldUpdateFlowControl = true;
-
-            if (StereotypeList?.Any(e => !PrevioudStereotypeList?.Any(e2 => e.Id == e2.Id) == true) == true)
-                shouldUpdateFlowControl = true;
-
-            if (WorkerList.Any(e => !PreviousWorkerInfos.Any(e2 => e.Id == e2.Id)
-                || (PreviousWorkerInfos.Any(e2 => e.Id == e2.Id && e.Data?.Result != e2.Data?.Result))))
-                shouldUpdateFlowControl = true;
-
-            if (shouldUpdateFlowControl)
+            try
             {
-                edysonFlowControl1.SetData(EventList, StereotypeList, WorkerList);
-            }
 
-            PreviousEvents = EventList;
-            PrevioudStereotypeList = StereotypeList;
-            PreviousWorkerInfos = WorkerList;
+
+                var response = await new HttpClient().GetAsync($"http://localhost:5003/event/{Guid}");
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                EventList = JsonConvert.DeserializeObject<List<Event>>(responseContent);
+
+                response = await new HttpClient().GetAsync($"http://localhost:5002/stereotype/{Guid}");
+                responseContent = await response.Content.ReadAsStringAsync();
+
+                StereotypeList = JsonConvert.DeserializeObject<List<Stereotype>>(responseContent);
+
+                var workerManagerActor = ActorProxy.Create<IWorkerManagerActor>(
+                    new ActorId($"WorkerManagerActor_Dashboard"), "WorkerManagerActor");
+
+                WorkerList = await workerManagerActor.GetWorkersByContext(Guid);
+
+                var shouldUpdateFlowControl = false;
+                if (EventList?.Count != PreviousEvents.Count
+                    || StereotypeList?.Count != PrevioudStereotypeList?.Count
+                    || WorkerList.Count != PreviousWorkerInfos.Count)
+                    shouldUpdateFlowControl = true;
+
+                if (EventList?.Any(e => !PreviousEvents.Any(e2 => e.Id == e2.Id)) == true)
+                    shouldUpdateFlowControl = true;
+
+                if (StereotypeList?.Any(e => !PrevioudStereotypeList?.Any(e2 => e.Id == e2.Id) == true) == true)
+                    shouldUpdateFlowControl = true;
+
+                if (WorkerList.Any(e => !PreviousWorkerInfos.Any(e2 => e.Id == e2.Id)
+                    || (PreviousWorkerInfos.Any(e2 => e.Id == e2.Id && e.Data?.Result != e2.Data?.Result))))
+                    shouldUpdateFlowControl = true;
+
+                if (shouldUpdateFlowControl)
+                {
+                    edysonFlowControl1.SetData(EventList, StereotypeList, WorkerList);
+                }
+
+                PreviousEvents = EventList;
+                PrevioudStereotypeList = StereotypeList;
+                PreviousWorkerInfos = WorkerList;
+            }
+            catch
+            {
+
+            }
         }
 
         private void SelectWorkerProcessing(WorkerInfo worker)

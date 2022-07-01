@@ -114,7 +114,7 @@ namespace StereotypeRecognizer.Controllers
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(ex.Message);
+                    Console.WriteLine(ex);
                 }
 
                 return result;
@@ -129,16 +129,15 @@ namespace StereotypeRecognizer.Controllers
                 new List<List<Dictionary<string, string>>>().GetType(),
             });
 
-
             var argDict = obj as ArgDict;
             var listOfArgDict = obj as List<Dictionary<string, string>>;
             var listOfListOfArgDict = obj as List<List<Dictionary<string, string>>>;
 
             if (listOfListOfArgDict != null || listOfArgDict != null)
             {
-                var charts = listOfListOfArgDict != null
-                    ? ArgDict.FlattenToDictPoints(listOfListOfArgDict)
-                    : ArgDict.FlattenToDictPoints(listOfArgDict);
+                //var charts = listOfListOfArgDict != null
+                //    ? ArgDict.FlattenToDictPoints(listOfListOfArgDict)
+                //    : ArgDict.FlattenToDictPoints(listOfArgDict);
                 var charts2 = listOfListOfArgDict != null
                     ? ArgDict.FlattenToDictPoints2(listOfListOfArgDict)
                     : ArgDict.FlattenToDictPoints2(listOfArgDict);
@@ -159,8 +158,38 @@ namespace StereotypeRecognizer.Controllers
                 stereotypeToSave.LowerBounds = getBounds2(stereotype.LowerBounds);
 
                 var result = false;
-                foreach (var chart in charts)
+                foreach (var chart in charts2)
                 {
+                    var accuracy = 1;
+                    var hitCount = 0;
+
+                    if (!string.IsNullOrWhiteSpace(stereotype.Accuracy))
+                    {
+                        var confAccuracy = stereotype.Accuracy;
+                        var isPercent = confAccuracy.Contains('%');
+                        if (isPercent)
+                        {
+                            confAccuracy = confAccuracy.Replace("%", "").Trim();
+                        }
+                        Console.WriteLine($"isPercent:{isPercent}");
+                        Console.WriteLine(confAccuracy);
+                        if (float.TryParse(confAccuracy, out var floatVal))
+                        {
+                            Console.WriteLine($"floatVal:{floatVal}");
+
+                            if (isPercent)
+                            {
+                                accuracy = (int)(chart.Value["Value"].Count * floatVal / 100);
+                            }
+                            else
+                            {
+                                accuracy = (int)floatVal;
+                            }
+                        }
+                    }
+
+                    Console.WriteLine($"accuracy in conf:{stereotype.Accuracy}");
+
                     List<PointF> upperBound = stereotypeToSave.UpperBounds?.ContainsKey(chart.Key) == true
                         ? stereotypeToSave.UpperBounds[chart.Key] : null;
                     List<PointF> lowerBound = stereotypeToSave.LowerBounds?.ContainsKey(chart.Key) == true
@@ -173,9 +202,9 @@ namespace StereotypeRecognizer.Controllers
                         continue;
                     }
 
-                    for (var x = 0; x < chart.Value.Count; x++)
+                    for (var x = 0; x < chart.Value["Value"].Count; x++)
                     {
-                        var y = chart.Value[x].Y;
+                        var y = chart.Value["Value"][x];
 
                         float? upperY = (upperBound is null || upperBound.Count() < x - 1)
                             ? null : upperBound[x].Y;
@@ -189,20 +218,14 @@ namespace StereotypeRecognizer.Controllers
                             {
                                 if (y < upperY && y > lowerY)
                                 {
-                                    Console.WriteLine($"y:{y}, uppperY:{upperY}, lowerY: {lowerY}");
-                                    if (!stereotypeToSave.ConfirmedProperties.Contains(chart.Key))
-                                        stereotypeToSave.ConfirmedProperties.Add(chart.Key);
-                                    result = true;
+                                    hitCount++;
                                 }
                             }
                             else
                             {
                                 if (y < upperY || y > lowerY)
                                 {
-                                    Console.WriteLine($"y:{y}, uppperY:{upperY}, lowerY: {lowerY}");
-                                    if (!stereotypeToSave.ConfirmedProperties.Contains(chart.Key))
-                                        stereotypeToSave.ConfirmedProperties.Add(chart.Key);
-                                    result = true;
+                                    hitCount++;
                                 }
                             }
                         }
@@ -210,22 +233,24 @@ namespace StereotypeRecognizer.Controllers
                         {
                             if (y < upperY)
                             {
-                                Console.WriteLine($"y:{y}, uppperY:{upperY}");
-                                if (!stereotypeToSave.ConfirmedProperties.Contains(chart.Key))
-                                    stereotypeToSave.ConfirmedProperties.Add(chart.Key);
-                                result = true;
+                                hitCount++;
                             }
                         }
                         else if (lowerY.HasValue)
                         {
                             if (y > lowerY)
                             {
-                                Console.WriteLine($"y:{y}, lowerY:{lowerY}");
-                                if (!stereotypeToSave.ConfirmedProperties.Contains(chart.Key))
-                                    stereotypeToSave.ConfirmedProperties.Add(chart.Key);
-                                result = true;
+                                hitCount++;
                             }
                         }
+                    }
+
+                    if (hitCount >= accuracy)
+                    {
+                        if (!stereotypeToSave.ConfirmedProperties.Contains(chart.Key))
+                            stereotypeToSave.ConfirmedProperties.Add(chart.Key);
+
+                        result = true;
                     }
                 }
 

@@ -3,11 +3,11 @@ Component set could be default
 
 #event_aggregator
 cd Services\EventAggregator
-dapr run --app-id event_aggregator --app-port 5000 --dapr-http-port 65391 --dapr-grpc-port 65392 -- dotnet run
+dapr run --app-id event_aggregator --app-port 5003 --dapr-http-port 65391 --dapr-grpc-port 65392 -- dotnet run
 
 #stereotype_recognizer
 Services\StereotypeRecognizer
-dapr run --app-id stereotype_recognizer --app-port 5001 --dapr-http-port 58002 --dapr-grpc-port 58003 -- dotnet run
+dapr run --app-id stereotype_recognizer --app-port 5002 --dapr-http-port 58002 --dapr-grpc-port 58003 -- dotnet run
 
 #Dashboard
 cd Dashboard

@@ -67,6 +67,10 @@ namespace Dashboard
             Draw();
         }
 
+        private Brush GetBrush()
+        {
+            return IsConfirmed ? new SolidBrush(Color.FromArgb(80, 0, 255, 0)) : new SolidBrush(Color.FromArgb(80, 255, 0, 0));
+        }
         public void SetData(Dictionary<string, List<PointF>>? data,
             List<PointF>? upperBound = null, List<PointF>? lowerBound = null, bool isConfirmed = false)
         {
@@ -153,20 +157,25 @@ namespace Dashboard
                 i++;
             }
 
-            Func<GraphicsPath, PathGradientBrush> getPathBrush = path =>
-            {
-                var confirmedColor1 = Color.FromArgb(125, 0, 255, 0);
-                var confirmedColor2 = Color.FromArgb(125, 200, 255, 200);
-                var rejectedColor1 = Color.FromArgb(125, 255, 0, 0);
-                var rejectedColor2 = Color.FromArgb(125, 255, 200, 200);
+            //Func<GraphicsPath, PathGradientBrush> getPathBrush = path =>
+            //{
+            //    try
+            //    {
+            //        var confirmedColor1 = Color.FromArgb(125, 0, 255, 0);
+            //        var confirmedColor2 = Color.FromArgb(125, 200, 255, 200);
+            //        var rejectedColor1 = Color.FromArgb(125, 255, 0, 0);
+            //        var rejectedColor2 = Color.FromArgb(125, 255, 200, 200);
 
-                var pthGrBrush = new PathGradientBrush(path);
-                pthGrBrush.CenterColor = IsConfirmed ? confirmedColor1 : rejectedColor1;
-                pthGrBrush.CenterPoint = new PointF((this.Width / 2), 0);
-                Color[] colors = { IsConfirmed ? confirmedColor2 : rejectedColor2 };
-                pthGrBrush.SurroundColors = colors;
-                return pthGrBrush;
-            };
+            //        var pthGrBrush = new PathGradientBrush(new GraphicsPath());
+
+            //        pthGrBrush.CenterColor = IsConfirmed ? confirmedColor1 : rejectedColor1;
+            //        pthGrBrush.CenterPoint = new PointF((this.Width / 2), 0);
+            //        Color[] colors = { IsConfirmed ? confirmedColor2 : rejectedColor2 };
+            //        pthGrBrush.SurroundColors = colors;
+            //        return pthGrBrush;
+            //    }
+            //    catch { return null; }
+            //};
 
             bool upperMoreThanLower = upperBound?.All((u) => u.Y > lowerBound?.FirstOrDefault(l => l.X == u.X).Y) == true;
 
@@ -200,7 +209,7 @@ namespace Dashboard
                 if (!upperMoreThanLower)
                 {
                     path.CloseFigure();
-                    graphics.FillPath(getPathBrush(path), path);
+                    graphics.FillPath(GetBrush(), path);
                     path = new GraphicsPath();
                 }
             }
@@ -231,7 +240,7 @@ namespace Dashboard
                 if (!upperMoreThanLower)
                 {
                     path.CloseFigure();
-                    graphics.FillPath(getPathBrush(path), path);
+                    graphics.FillPath(GetBrush(), path);
                     path = new GraphicsPath();
                 }
             }
@@ -239,7 +248,7 @@ namespace Dashboard
             if ((upperBound != null || lowerBound != null) && upperMoreThanLower)
             {
                 path.CloseFigure();
-                graphics.FillPath(getPathBrush(path), path);
+                graphics.FillPath(GetBrush(), path);
             }
 
             previousPoint = null;

@@ -4,32 +4,19 @@
       "Name": "pubsub",
       "Stereotypes": [
         {
-          "Name": "Test",
-          "Events": [
-            "PulseRiseEvent"
-          ],
-          "UpperBounds": {
-            "Pulse": "60"
-          },
-          "LowerBounds": {
-            "Pulse": "45"
-          },
-          "Actions": [
-            "Coffee"
-          ]
-        },
-        {
           "Name": "Hypotonia",
           "Events": [
             "PulseAndPressureFallEvent"
           ],
           "UpperBounds": {
-            "Pulse": "{Value} - {Age} + 35",
-            "Pressure": "{Value} - (({Age} - {Value})/3) - 30"
+            "Pulse": "{Value} + {Age}/3 - {Mood}",
+            "Pressure": "{Value} + {Age}/2 - {Mood}"
           },
           "LowerBounds": {
-            "Pulse": "{Value} - 30"
+            "Pulse": "{Value} - {Age}/3",
+            "Pressure": "{Value} - {Age}/2"
           },
+          "Accuracy": "100%",
           "Actions": [
             "Walking",
             "Coffee"
@@ -41,12 +28,14 @@
             "PulseAndPressureRiseEvent"
           ],
           "UpperBounds": {
-            "Pulse": "-25*x",
-            "Pressure": "0"
+            "Pulse": "10*x",
+            "Pressure": "70"
           },
           "LowerBounds": {
-            "Pressure": "-40"
+            "Pulse": "50*x",
+            "Pressure": "20"
           },
+          "Accuracy": "1",
           "Actions": [
             "TakePills",
             "Sleep"

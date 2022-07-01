@@ -8,7 +8,7 @@
           "EventQueue": [
             "PulseEvent"
           ],
-          "EventsCount": 3,
+          "EventsCount": 5,
           "Common": null,
           "Condition": "e[0].Value < e[1].Value",
           "Mandatory": "All",

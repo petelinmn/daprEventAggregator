@@ -40,8 +40,9 @@ namespace StereotypeRecognizer
         public static float Calculate(string expression, float XValue, Dictionary<string, float?> values)
         {
             Console.WriteLine($"Calculate expression:{expression}");
-            Values = values.ToDictionary(v => v.Key.ToLower(), v => v.Value.Value);
-            Console.WriteLine(JsonConvert.SerializeObject(Values, Formatting.Indented));
+            Console.WriteLine(JsonConvert.SerializeObject(values, Formatting.Indented));
+            Values = values.ToDictionary(v => v.Key.ToLower(), v => v.Value.HasValue ? v.Value.Value : 0);
+
             var expr = new Expression(expression.ToLower().Replace("{", "Prop('").Replace("}", "')"));
             var f = expr.ToLambda<NCalcExpression, float>();
 
