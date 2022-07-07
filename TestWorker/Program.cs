@@ -2,6 +2,7 @@
 using System.Globalization;
 using Dapr.Actors;
 using Dapr.Actors.Client;
+using Newtonsoft.Json;
 using WorkerManager.Actors.Contract;
 
 namespace TestWorker
@@ -36,6 +37,7 @@ namespace TestWorker
                 if (tasks.Count < countWorkers)
                 {
                     var workerArgs = await managerActor.StartNext(GetImplementations());
+                    Console.WriteLine(JsonConvert.SerializeObject(workerArgs, Formatting.Indented));
                     if (workerArgs?.WorkerId.HasValue == true)
                     {
                         Guid workerId = workerArgs.WorkerId.Value;
@@ -56,7 +58,7 @@ namespace TestWorker
                             await managerActor.Stop(workerId);
                         }
 
-                        var worker = GetWorker(arguments?.FirstOrDefault());
+                        var worker = GetWorker(workerArgs.Name);
                         if (worker != null)
                         {
                             tasks.Add(new WorkerTask

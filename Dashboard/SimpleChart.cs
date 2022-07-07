@@ -98,14 +98,14 @@ namespace Dashboard
             var max1 = Data.Max(i => i.Value.Max(j => j.X));
             var max2 = Data.Max(i => i.Value.Max(j => j.Y));
 
-            ChartWidth = (int)max1 + (int)(max1 / 4);
+            ChartWidth = (float)max1 + (float)(max1 / 5);
             if (ChartWidth < 3)
                 ChartWidth = 3;
 
-            ChartHeight = (int)max2 + (int)(max2 / 4);
+            ChartHeight = (float)max2 + (float)(max2 / 3);
 
-            var yAxisLength = ChartHeight - PaddingBottom;
-            var xAxisLength = ChartWidth - PaddingLeft * 2;
+            var yAxisLength = max2*1.3f;
+            var xAxisLength = max1*1.3f;
             graphics.DrawLine(Pens.Black, MathToDevice(new PointF(0, 0)), MathToDevice(new PointF(0, yAxisLength)));
             graphics.DrawLine(Pens.Black, MathToDevice(new PointF(0, 0)), MathToDevice(new PointF(xAxisLength, 0)));
 
@@ -133,7 +133,7 @@ namespace Dashboard
 
                     if (prevousPoint.HasValue)
                     {
-                        graphics.DrawLine(new Pen(linesColors[i % linesColors.Count], 2), MathToDevice(prevousPoint.Value), MathToDevice(p));
+                        graphics.DrawLine(new Pen(linesColors[i % linesColors.Count], 4), MathToDevice(prevousPoint.Value), MathToDevice(p));
                     }
 
                     prevousPoint = p;
@@ -149,7 +149,7 @@ namespace Dashboard
                 {
                     var p = new PointF(point.X, point.Y);
 
-                    var ellipseSize = new Size(8, 8);
+                    var ellipseSize = new Size(12, 12);
                     graphics.FillEllipse(new SolidBrush(pointColors[i % pointColors.Count]),
                         new RectangleF(EllipseDelta(MathToDevice(p), ellipseSize), ellipseSize));
                 }
@@ -185,13 +185,13 @@ namespace Dashboard
             if (upperBound != null)
             {
                 var drawed = upperBound.ToList();
-                if (!upperMoreThanLower)
+
+                if (!upperMoreThanLower || lowerBound == null)
                 {
                     var lastPoint = upperBound.Last();
                     var nextPoint = new PointF(lastPoint.X, 0);
                     var zeroPoint = new PointF(0, 0);
 
-                    drawed.Add(lastPoint);
                     drawed.Add(nextPoint);
                     drawed.Add(zeroPoint);
                 }
@@ -200,11 +200,6 @@ namespace Dashboard
                     path.AddCurve(drawed.Select(p => MathToDevice(p)).ToArray());
                 else
                     path.AddLines(drawed.Select(p => MathToDevice(p)).ToArray());
-
-                if (lowerBound == null)
-                {
-                    //path.AddLine(MathToDevice(new PointF(upperBound.LastOrDefault().X, 0)), MathToDevice(new PointF(0, 0)));
-                }
 
                 if (!upperMoreThanLower)
                 {
@@ -217,13 +212,12 @@ namespace Dashboard
             if (lowerBound != null)
             {
                 var drawed = lowerBound.ToList();
-                if (!upperMoreThanLower)
+                if (!upperMoreThanLower || upperBound == null)
                 {
-                    var lastPoint = lowerBound.Last();
+                    var lastPoint = lowerBound.First();
 
-                    drawed.Add(lastPoint);
-                    drawed.Add(new PointF(lastPoint.X, this.Height));
-                    drawed.Add(new PointF(0, this.Height));
+                    drawed.Add(new PointF(0, ChartHeight + 10));
+                    drawed.Add(new PointF(lastPoint.X, ChartHeight + 10));
                 }
 
                 if (lowerBound.Count >= countPointsForCurve)
@@ -231,18 +225,14 @@ namespace Dashboard
                 else
                     path.AddLines(drawed.Select(p => MathToDevice(p)).ToArray());
 
-                //if (upperBound == null)
-                //{
-                //    path.AddLine(MathToDevice(new PointF(lowerBound.LastOrDefault().X, ChartHeight + 1)),
-                //        MathToDevice(new PointF(lowerBound.FirstOrDefault().X, ChartHeight + 1)));
-                //}
-
                 if (!upperMoreThanLower)
                 {
                     path.CloseFigure();
                     graphics.FillPath(GetBrush(), path);
+
                     path = new GraphicsPath();
                 }
+
             }
 
             if ((upperBound != null || lowerBound != null) && upperMoreThanLower)
@@ -288,25 +278,36 @@ namespace Dashboard
                 });
         }
 
-        int ChartHeight = 200;
-        int ChartWidth = 5;
+        float ChartHeight = 200;
+        float ChartWidth = 5;
 
-        int ScaleLevelX { get => this.Width / ChartWidth; }
-        int ScaleLevelY { get => this.Height / ChartHeight; }
+        float ScaleLevelX { get => this.Width / ChartWidth; }
+        float ScaleLevelY
+        { 
+            get
+            {
+                var res = (float)((this.Height) / ChartHeight);
+                //MessageBox.Show($"Height:{this.Height}, ChartHeight: {ChartHeight}, res:{res}");
+                return res;
+            }
+        }
 
-        float PaddingLeft { get => (float)ChartWidth / 20; }
-        float PaddingBottom { get => (float)ChartHeight / 10; }
+        float PaddingLeft { get => 60f; }
+        float PaddingBottom { get => 25f; }
 
         Point MathToDevice(PointF point)
         {
-            var x = point.X * ScaleLevelX + PaddingLeft * ScaleLevelX;
-            var y = this.Height - (point.Y * ScaleLevelY + PaddingBottom * ScaleLevelY);
+            var x = point.X * ScaleLevelX + PaddingLeft;
+            var y = this.Height - (point.Y * ScaleLevelY + PaddingBottom);
 
             return new Point((int)x, (int)y);
         }
 
         Point EllipseDelta(Point point, Size size) =>
             new Point(point.X - size.Width / 2, point.Y - size.Height / 2);
+
+        PointF EllipseDelta(PointF point, SizeF size) =>
+            new PointF(point.X - size.Width / 2, point.Y - size.Height / 2);
 
         private void SimpleChart_VisibleChanged(object sender, EventArgs e)
         {

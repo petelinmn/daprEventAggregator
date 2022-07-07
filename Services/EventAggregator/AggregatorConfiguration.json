@@ -18,7 +18,7 @@
           "Name": "PulseFallEvent",
           "EventQueue": [
             "PulseEvent"
-          ],
+          ], 
           "EventsCount": 5,
           "Common": null,
           "Condition": "e[0].Value > e[1].Value && e[1].Value > e[2].Value && e[2].Value > e[3].Value",

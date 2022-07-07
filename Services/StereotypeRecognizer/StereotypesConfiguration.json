@@ -28,12 +28,10 @@
             "PulseAndPressureRiseEvent"
           ],
           "UpperBounds": {
-            "Pulse": "10*x",
-            "Pressure": "70"
+            "Pressure": "100"
           },
           "LowerBounds": {
-            "Pulse": "50*x",
-            "Pressure": "20"
+            "Pulse": "{Value} + {Mood} - {Age}"
           },
           "Accuracy": "1",
           "Actions": [

@@ -95,6 +95,7 @@ namespace Dashboard
 
             eventSequenceEditor.OnChange += new EventHandler(eventSequenceEditorOnChange);
             eventSequenceEditor.OnStop += new EventHandler(eventSequenceEditor_OnStop);
+            eventSequenceEditor.Redraw();
         }
 
         private void saveFileButton_Click(object sender, EventArgs e) => Save();
@@ -206,6 +207,8 @@ namespace Dashboard
             await Task.Delay(10);
             var eventSequenceEditor = GetEventSequenceEditor();
             saveFileButton.Enabled = eventSequenceEditor != null && eventSequenceEditor?.Saved != true;
+
+            eventSequenceEditor.Redraw();
         }
 
         private void eventSequenceEditorOnChange(object sender, EventArgs e)

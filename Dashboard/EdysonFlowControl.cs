@@ -72,8 +72,11 @@ namespace Dashboard
             Draw();
         }
 
-        private void Draw()
+        public void Draw()
         {
+            if (!(Events?.Count > 0))
+                return;
+
             var list = new List<BaseEntity>();
             list.AddRange(Events);
             list.AddRange(Stereotypes);
@@ -95,7 +98,7 @@ namespace Dashboard
 
             DrawCounter(graphics);
 
-            var currentColumnX = 80;
+            var currentColumnX = 20;
             var currentRowY = 20;
             PaintedEvents = new Dictionary<Guid, Rectangle>();
             PaintedStereotypes = new Dictionary<Guid, Rectangle>();
@@ -122,7 +125,7 @@ namespace Dashboard
                         //var parentRects = PaintedEvents.Where(i => @event.Parents.Contains(i.Key))
                         //    .Select(i => i.Value).TakeLast(2).ToList();
 
-                        currentColumnX += currentColumnWidth + 10;
+                        currentColumnX += currentColumnWidth / 6;
                         currentRowY = 20;
                         lastObjType = ObjType.ComplexEvent;
                     }
@@ -134,12 +137,12 @@ namespace Dashboard
                         if (lastObjType != ObjType.AtomicEvent)
                         {
                             currentRowY = 150;
-                            currentColumnX += currentColumnWidth + 15;
+                            currentColumnX += currentColumnWidth;
                         }
                         else if (currentRowY > this.Height - 50)
                         {
                             currentRowY = 150;
-                            currentColumnX += currentColumnWidth + 15;
+                            currentColumnX += currentColumnWidth;
                         }
                         lastObjType = ObjType.AtomicEvent;
                     }
@@ -150,11 +153,11 @@ namespace Dashboard
                     PaintedEvents.Add(@event.Id, rect);
 
                     if (rect.Width > currentColumnWidth)
-                        currentColumnWidth = rect.Width + 20;
+                        currentColumnWidth = rect.Width;
                 }
                 if (isStereotype)
                 {
-                    currentColumnX += currentColumnWidth + 10;
+                    currentColumnX += currentColumnWidth;
 
                     int width = stereotype.Name.Length * 16 - (stereotype.Name.Length > 10 ? stereotype.Name.Length : -1);
                     int height = width / 2;
@@ -163,7 +166,7 @@ namespace Dashboard
                     var rect = new Rectangle(currentColumnX + 50, currentRowY + 50, width, height);
                     PaintedStereotypes.Add(stereotype.Id, rect);
 
-                    currentColumnWidth = rect.Width + 20;
+                    currentColumnWidth = rect.Width;
 
                     lastObjType = ObjType.Stereotype;
                 }
@@ -184,13 +187,13 @@ namespace Dashboard
                     else
                     {
                         currentRowY = 50;
-                        currentColumnX += paintedStereotype.Value.Width + 100;
+                        currentColumnX += paintedStereotype.Value.Width + 20;
                     }
 
                     lastObjType = ObjType.Worker;
                     string title = GetDisplayTitleForWorker(workerInfo);
                     int width = title.Length * 16 - (title.Length > 10 ? title.Length : -1);
-                    var rect = new Rectangle(currentColumnX, currentRowY, width, width);
+                    var rect = new Rectangle(currentColumnX, currentRowY, width, 38);
 
                     PaintedWorkers.Add(workerInfo.Id, rect);
 
@@ -312,11 +315,11 @@ namespace Dashboard
                 : Brushes.YellowGreen;
 
             var pen = workerInfo.Id == SelectedObject ? new Pen(Brushes.Black, 4) : new Pen(Brushes.Gray);
-            //graphics.FillPath(brush, RoundedRect(rect, 10));
-            //graphics.DrawPath(pen, RoundedRect(rect, 10));
+            graphics.FillPath(brush, RoundedRect(rect, 20));
+            graphics.DrawPath(pen, RoundedRect(rect, 20));
 
-            graphics.FillEllipse(brush, rect);
-            graphics.DrawEllipse(pen, rect);
+            //graphics.FillEllipse(brush, rect);
+            //graphics.DrawEllipse(pen, rect);
 
             string title = GetDisplayTitleForWorker(workerInfo);
             graphics.DrawString(title, new Font("courier", 12), Brushes.Black, new PointF(rect.X + rect.Width / 2 - title.Length * 5, rect.Y + (int)(rect.Height / 2.4)));
@@ -418,6 +421,11 @@ namespace Dashboard
         private void EdysonFlowControl_MouseMove(object sender, MouseEventArgs e)
         {
             MousePositionRelativeToThis = new Point(e.X, e.Y);
+        }
+
+        private void hScrollBar1_Scroll(object sender, ScrollEventArgs e)
+        {
+            //e.
         }
     }
 }

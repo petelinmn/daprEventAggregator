@@ -30,15 +30,20 @@ namespace WorkerManager.Actors
             return worker.Id;
         }
 
+        void Msg(string message)
+        {
+            Console.WriteLine($"--------------------{Environment.NewLine}{Environment.NewLine}{message}{Environment.NewLine}------------------------");
+        }
+
         public async Task<WorkerArgs> StartNext(string[] implementations)
         {
             var nextWorkerId = await GetWorkerFromQueue();
-
+            Msg($"StartNext, nextWorkerId: {nextWorkerId}");
             if (!nextWorkerId.HasValue)
                 return null;
 
             var worker = await GetWorker(nextWorkerId.Value);
-
+            Msg($"StartNext, worker is found: {worker.Name}");
             if (worker == null)
                 return null;
 
@@ -51,6 +56,7 @@ namespace WorkerManager.Actors
                 return new WorkerArgs
                 {
                     WorkerId = worker.Id,
+                    Name = worker.Name,
                     Args = worker.Args
                 };
             }
@@ -148,8 +154,11 @@ namespace WorkerManager.Actors
                               new Dictionary<Guid, WorkerStatus>();
 
                 if (workers == null || !workers.ContainsValue(WorkerStatus.Init))
+                {
+                    Msg("No workers");
                     return null;
-
+                }
+                Msg("Worker exist");
                 var workerId = workers.FirstOrDefault(i =>
                     i.Value == WorkerStatus.Init).Key;
                 workers[workerId] = WorkerStatus.Work;

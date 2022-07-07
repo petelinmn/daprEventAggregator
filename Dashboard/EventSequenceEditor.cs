@@ -183,6 +183,9 @@ namespace Dashboard
 
         public async Task CommandProcessing(string command)
         {
+            if (command.Trim().StartsWith("//"))
+                return;
+
             var commandName = command.Split(' ').FirstOrDefault();
             var parts = Split(command);
             switch (commandName?.ToLower())
@@ -305,6 +308,19 @@ namespace Dashboard
 
         }
 
+        private void CreateChart(TabPage page, Dictionary<string, List<PointF>> data, int height,
+            List<PointF>? upperBound = null, List<PointF>? lowerBound = null, bool isConfirmed = false)
+        {
+            var simpleChart = new SimpleChart();
+            page.Controls.Add(simpleChart);
+            simpleChart.Dock = DockStyle.Top;
+            simpleChart.Height = height;
+            simpleChart.BorderStyle = BorderStyle.FixedSingle;
+            tabControl1.SelectedIndexChanged += (o, e) => simpleChart.Draw();
+            tabControl1.VisibleChanged += (o, e) => simpleChart.Draw();
+            simpleChart.SetData(data, upperBound, lowerBound, isConfirmed);
+        }
+
         private void SelectEventProcessing(Event? @event)
         {
             argumentsTextBox.Text =
@@ -322,23 +338,15 @@ namespace Dashboard
             var listOfArgDict = obj as List<Dictionary<string, string>>;
             var listOfListOfArgDict = obj as List<List<Dictionary<string, string>>>;
 
-            while (tabControl1.TabCount > 1)
-                tabControl1.TabPages.RemoveAt(tabControl1.TabCount - 1);
+            var tabPage = tabControl1.TabPages[1];
+            tabPage.Controls.Clear();
 
             if (argDict != null && argDict.ContainsKey("Name") && argDict.ContainsKey("Value") && float.TryParse(argDict["Value"], out float val))
             {
                 var dataForChart = new Dictionary<string, List<PointF>>();
                 dataForChart[argDict["Value"]] = new List<PointF>() { new PointF(1, val) };
 
-                tabControl1.TabPages.Add(dataForChart.FirstOrDefault().Key ?? "Chart");
-                var tabPage = tabControl1.TabPages[tabControl1.TabCount - 1];
-                var simpleChart = new SimpleChart();
-                tabPage.Controls.Add(simpleChart);
-                tabPage.Controls.Add(new TextBox());
-                simpleChart.Dock = DockStyle.Fill;
-                tabControl1.SelectedIndexChanged += (o, e) => simpleChart.Draw();
-
-                simpleChart.SetData(dataForChart);
+                CreateChart(tabPage, dataForChart, tabPage.Height);
             }
 
             if (listOfArgDict != null)
@@ -346,15 +354,7 @@ namespace Dashboard
                 var charts = ArgDict.FlattenToDictPoints2(listOfArgDict);
                 var data = charts.ToDictionary(i => i.Key, i => i.Value.Where(i => i.Key == "Value").FirstOrDefault().Value.Select((i, index) => new PointF(index, i.Value)).ToList());
 
-                tabControl1.TabPages.Add(data.FirstOrDefault().Key ?? "Chart");
-                var tabPage = tabControl1.TabPages[tabControl1.TabCount - 1];
-                var simpleChart = new SimpleChart();
-                tabPage.Controls.Add(simpleChart);
-                tabPage.Controls.Add(new TextBox());
-                simpleChart.Dock = DockStyle.Fill;
-                tabControl1.SelectedIndexChanged += (o, e) => simpleChart.Draw();
-
-                simpleChart.SetData(data);
+                CreateChart(tabPage, data, tabPage.Height);
             }
 
             if (listOfListOfArgDict != null)
@@ -363,14 +363,6 @@ namespace Dashboard
 
                 foreach (var chart in charts)
                 {
-                    tabControl1.TabPages.Add(chart.Key);
-                    var tabPage = tabControl1.TabPages[tabControl1.TabCount - 1];
-                    var simpleChart = new SimpleChart();
-                    tabPage.Controls.Add(simpleChart);
-                    tabPage.Controls.Add(new TextBox());
-                    simpleChart.Dock = DockStyle.Fill;
-                    tabControl1.SelectedIndexChanged += (o, e) => simpleChart.Draw();
-
                     var stereotype = @event as Stereotype;
                     List<PointF>? upperBound = null;
                     List<PointF>? lowerBound = null;
@@ -382,11 +374,11 @@ namespace Dashboard
                             ? stereotype.LowerBounds[chart.Key] : null;
                     }
 
-                    var data0 = charts.Where(x => x.Key == chart.Key).ToDictionary(x => x.Key,
+                    var data = charts.Where(x => x.Key == chart.Key).ToDictionary(x => x.Key,
                         x => x.Value.Where(i => i.Key == "Value").FirstOrDefault().Value.Select((i, index) => new PointF(index, i.HasValue ? i.Value : 0f)).ToList()
                     );
 
-                    simpleChart.SetData(data0, upperBound, lowerBound,
+                    CreateChart(tabPage, data, (int)(tabPage.Height / charts.Count), upperBound, lowerBound,
                         stereotype?.ConfirmedProperties?.Any(p => p == chart.Key) == true);
                 }
             }
@@ -402,6 +394,11 @@ namespace Dashboard
             simpleChart1.Draw();
         }
 
+        public void Redraw()
+        {
+            edysonFlowControl1.Draw();
+        }
+
         private async void edysonFlowControl1_OnSelectObject(object sender, OnSelectObjectEventArgs e)
         {
             tabControl1.Visible = false;
@@ -414,7 +411,6 @@ namespace Dashboard
 
             if (edysonFlowControl1?.SelectedWorker != null)
                 SelectWorkerProcessing(edysonFlowControl1.SelectedWorker);
-
 
             if (edysonFlowControl1?.SelectedWorker == null)
             {

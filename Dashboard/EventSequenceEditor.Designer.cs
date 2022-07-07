@@ -65,7 +65,7 @@
             this.listBox1.Font = new System.Drawing.Font("Cascadia Mono", 10.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.listBox1.FormattingEnabled = true;
             this.listBox1.ItemHeight = 24;
-            this.listBox1.Location = new System.Drawing.Point(704, 0);
+            this.listBox1.Location = new System.Drawing.Point(545, 29);
             this.listBox1.Name = "listBox1";
             this.listBox1.Size = new System.Drawing.Size(439, 676);
             this.listBox1.TabIndex = 2;
@@ -89,7 +89,7 @@
             this.panel1.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.panel1.Location = new System.Drawing.Point(0, 307);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(1470, 419);
+            this.panel1.Size = new System.Drawing.Size(615, 419);
             this.panel1.TabIndex = 4;
             // 
             // edysonFlowControl1
@@ -99,7 +99,7 @@
             this.edysonFlowControl1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.edysonFlowControl1.Location = new System.Drawing.Point(0, 0);
             this.edysonFlowControl1.Name = "edysonFlowControl1";
-            this.edysonFlowControl1.Size = new System.Drawing.Size(1470, 419);
+            this.edysonFlowControl1.Size = new System.Drawing.Size(615, 419);
             this.edysonFlowControl1.TabIndex = 0;
             this.edysonFlowControl1.OnSelectObject += new Dashboard.EdysonFlowControl.OnSelectObjectEventHandler(this.edysonFlowControl1_OnSelectObject);
             // 
@@ -107,9 +107,9 @@
             // 
             this.panel2.Controls.Add(this.tabControl1);
             this.panel2.Dock = System.Windows.Forms.DockStyle.Right;
-            this.panel2.Location = new System.Drawing.Point(439, 0);
+            this.panel2.Location = new System.Drawing.Point(615, 0);
             this.panel2.Name = "panel2";
-            this.panel2.Size = new System.Drawing.Size(1031, 307);
+            this.panel2.Size = new System.Drawing.Size(855, 726);
             this.panel2.TabIndex = 5;
             // 
             // tabControl1
@@ -120,7 +120,7 @@
             this.tabControl1.Location = new System.Drawing.Point(0, 0);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(1031, 307);
+            this.tabControl1.Size = new System.Drawing.Size(855, 726);
             this.tabControl1.TabIndex = 4;
             this.tabControl1.SelectedIndexChanged += new System.EventHandler(this.tabControl1_SelectedIndexChanged);
             // 
@@ -130,7 +130,7 @@
             this.argTab.Location = new System.Drawing.Point(4, 29);
             this.argTab.Name = "argTab";
             this.argTab.Padding = new System.Windows.Forms.Padding(3);
-            this.argTab.Size = new System.Drawing.Size(1023, 274);
+            this.argTab.Size = new System.Drawing.Size(847, 693);
             this.argTab.TabIndex = 0;
             this.argTab.Text = "Arguments";
             this.argTab.UseVisualStyleBackColor = true;
@@ -145,7 +145,7 @@
             this.argumentsTextBox.Multiline = true;
             this.argumentsTextBox.Name = "argumentsTextBox";
             this.argumentsTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.argumentsTextBox.Size = new System.Drawing.Size(1017, 268);
+            this.argumentsTextBox.Size = new System.Drawing.Size(841, 687);
             this.argumentsTextBox.TabIndex = 0;
             // 
             // chartTab
@@ -154,7 +154,7 @@
             this.chartTab.Location = new System.Drawing.Point(4, 29);
             this.chartTab.Name = "chartTab";
             this.chartTab.Padding = new System.Windows.Forms.Padding(3);
-            this.chartTab.Size = new System.Drawing.Size(1023, 274);
+            this.chartTab.Size = new System.Drawing.Size(656, 693);
             this.chartTab.TabIndex = 1;
             this.chartTab.Text = "Chart";
             this.chartTab.UseVisualStyleBackColor = true;
@@ -164,7 +164,7 @@
             this.simpleChart1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.simpleChart1.Location = new System.Drawing.Point(3, 3);
             this.simpleChart1.Name = "simpleChart1";
-            this.simpleChart1.Size = new System.Drawing.Size(1017, 268);
+            this.simpleChart1.Size = new System.Drawing.Size(650, 687);
             this.simpleChart1.TabIndex = 0;
             this.simpleChart1.VisibleChanged += new System.EventHandler(this.simpleChart1_VisibleChanged);
             this.simpleChart1.Click += new System.EventHandler(this.simpleChart1_VisibleChanged);
@@ -173,10 +173,10 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.Controls.Add(this.panel2);
             this.Controls.Add(this.commandEditor);
             this.Controls.Add(this.listBox1);
             this.Controls.Add(this.panel1);
+            this.Controls.Add(this.panel2);
             this.Name = "EventSequenceEditor";
             this.Size = new System.Drawing.Size(1470, 726);
             this.panel1.ResumeLayout(false);
